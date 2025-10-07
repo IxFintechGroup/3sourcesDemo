@@ -19,12 +19,64 @@ import os
 import json
 import pickle
 from pathlib import Path
-
 from sources_nokey import ASSETS, union_three_sources, fuse_daily, dispersion_daily
+from auth_config import check_credentials, get_demo_credentials
 
 # Data storage configuration
 DATA_DIR = Path("data_storage")
 DATA_DIR.mkdir(exist_ok=True)
+
+def show_login_page():
+    """Display the login page."""
+    st.set_page_config(page_title="Login - Multi-Source OHLCV", layout="centered")
+    
+    # Center the login form
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.markdown("""
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h1>🔐 Multi-Source OHLCV</h1>
+            <h3>Please log in to continue</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        with st.form("login_form"):
+            username = st.text_input("Username", placeholder="Enter your username")
+            password = st.text_input("Password", type="password", placeholder="Enter your password")
+            submit_button = st.form_submit_button("Login", use_container_width=True)
+            
+            if submit_button:
+                if check_credentials(username, password):
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.success("✅ Login successful!")
+                    st.rerun()
+                else:
+                    st.error("❌ Invalid username or password")
+        
+        # # Demo credentials info
+        # with st.expander("Demo Credentials", expanded=False):
+        #     demo_creds = get_demo_credentials()
+        #     creds_text = "**Available demo accounts:**\n"
+        #     for username, password in demo_creds.items():
+        #         if password:
+        #             creds_text += f"- Username: `{username}` | Password: `{password}`\n"
+        #         else:
+        #             creds_text += f"- Username: `{username}` | Password: (empty)\n"
+        #     st.markdown(creds_text)
+
+def show_logout_button():
+    """Display logout button in sidebar."""
+    with st.sidebar:
+        st.markdown("---")
+        st.markdown(f"👤 Logged in as: **{st.session_state.username}**")
+        if st.button("🚪 Logout", use_container_width=True):
+            # Clear authentication state
+            for key in list(st.session_state.keys()):
+                if key.startswith('authenticated') or key.startswith('username'):
+                    del st.session_state[key]
+            st.rerun()
 
 def get_run_id():
     """Generate a unique run ID based on current date and time."""
@@ -583,7 +635,20 @@ def generate_correlation_analysis_summary(sym, raw_all):
     
     return summary
 
+# Initialize authentication state
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+# Check authentication
+if not st.session_state.authenticated:
+    show_login_page()
+    st.stop()
+
+# Main application starts here (only if authenticated)
 st.set_page_config(page_title="Multi-Source Daily OHLCV (No-Key Demo)", layout="wide")
+
+# Show logout button in sidebar
+show_logout_button()
 
 st.title("Multi-Source Daily OHLCV — No-Key Demo")
 st.markdown("This demo pulls **daily OHLCV** for selected assets from *CMC public data-api*, *CryptoCompare*, and *CoinGecko*, then reconciles to a fused daily series.")
