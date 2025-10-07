@@ -1,0 +1,15 @@
+# Core web framework
+streamlit
+
+# Data manipulation and analysis
+pandas
+numpy
+
+# Data visualization
+matplotlib
+
+# HTTP requests for API calls
+requests
+
+# Note: Standard library modules (io, time, datetime, os, json, pickle, pathlib, hashlib, math, typing)
+# are included with Python and do not need to be installed separately
